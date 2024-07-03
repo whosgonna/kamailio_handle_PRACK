@@ -1,7 +1,9 @@
 
 # Summary
 [1.Components](#1.-Components)
+
 [2. Network Configuration](#2.-Network-Configuration)
+
 [3. Building the Docker Images](#3.-Building-the-Docker-Images)
 [4. Steps to Build Docker Image](#4.-Steps-to-Build-Docker-Image)
 [5. Interact with the docker compose project](5.-Interact-with-the-docker-compose-project)
