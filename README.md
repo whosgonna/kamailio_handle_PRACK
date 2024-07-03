@@ -34,6 +34,25 @@ docker builder build -t debian-sipp:latest .
 docker build -t debian-sipp:latest .
 ```
 
+# 5. Interact with the docker compose project
+You can interact with this docker compose project in two ways, the first one it to type directly the commands to launch the SIPp call, launch the sngrep application and gettings logs or execute the ***./kamailio_handle_PRACK/env.bash*** bash file which contains bash shortcuts to interact with the docker containrs like making calls, launching the sngrep on the containrs... Read the ***env.bash*** for more details
+## 5.1. (Optional for Linux Users) Interact with the project using env.bash shortcuts and aliases
+### 5.1.1. Execute the *env.bash* file
+Navigate to the directory containing the ***env.bash*** file, then execute it:
+```bash
+cd ./kamailio_handle_PRACK/
+source env.bash
+```
+
+# 4.2. Building SIPp docker image
+Navigate to the directory containing the SIPp Dockerfile, then run the build command:
+```bash
+cd ./kamailio_handle_PRACK/dockerfiles/SIPp
+docker builder build -t debian-sipp:latest .
+#or
+docker build -t debian-sipp:latest .
+```
+
 
 
 bash
