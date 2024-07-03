@@ -35,13 +35,39 @@ docker build -t debian-sipp:latest .
 ```
 
 # 5. Interact with the docker compose project
-You can interact with this docker compose project in two ways, the first one it to type directly the commands to launch the SIPp call, launch the sngrep application and gettings logs or execute the ***./kamailio_handle_PRACK/env.bash*** bash file which contains bash shortcuts to interact with the docker containrs like making calls, launching the sngrep on the containrs... Read the ***env.bash*** for more details
+You can interact with this docker compose project in two ways, the first one it to type directly the commands to launch the SIPp call, launch the sngrep application and gettings logs or execute the ***./kamailio_handle_PRACK/env.bash*** bash file which contains bash shortcuts to interact with the docker containrs like making calls, launching the sngrep on the containers... Read the ***./kamailio_handle_PRACK/env.bash*** file for more details
 ## 5.1. (Optional for Linux Users) Interact with the project using env.bash shortcuts and aliases
 ### 5.1.1. Execute the *env.bash* file
 Navigate to the directory containing the ***env.bash*** file, then execute it:
 ```bash
 cd ./kamailio_handle_PRACK/
 source env.bash
+```
+### 5.1.2. Basic commands from env.bash
+To **start** the docker compose containers, type:
+```bash
+$up
+```
+To **stop** the docker compose project, type:
+```bash
+$down
+```
+To get the stats of containers, type
+```bash
+$docker_ps
+```
+### 5.1.3. Commands to get the container's logs & launch SNGRep
+To **get logs** of each container, type:
+```bash
+ $the_proxy_logs #get the kamailio container's logs
+ $the_caller_logs #get the UAC container's logs
+ $the_callee_logs #get the UAS container's logs
+```
+To **launch SNGRep application** on each container type:
+```bash
+$the_proxy_sngrep #launch sngrep on the kamailio container
+$the_caller_sngrep #launch sngrep on the UAC container
+$the_callee_sngrep #launch snrep on the UAS container
 ```
 
 # 4.2. Building SIPp docker image
