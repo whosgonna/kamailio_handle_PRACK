@@ -1,0 +1,59 @@
+version: "3.5"
+services:
+
+  # we use kamailio 5.7.5 built from source code
+  # kamailio has the ip 200.200.200.4
+  # kamailio configuration file can be found here "/usr/local/etc/kamailio/kamailio.cfg"
+  kamailio_sip_proxy:
+    image: debian_11_kamailio:5.7.5
+    container_name: kamailio_sip_proxy
+    hostname: kamailio_sip_proxy
+    volumes:
+      - ./kamailio_configuration/kamailio.cfg:/usr/local/etc/kamailio/kamailio.cfg
+    networks:
+      kamailio_PRACK_network:
+        ipv4_address: 200.200.200.3
+    command: kamailio -DD -E -f kamailio.cfg
+
+  # the callee is a SIPp instance
+  # UAS listening on  200.200.200.4:5060
+  the_callee:
+    image: debian-sipp:latest
+    container_name: the_callee
+    hostname: the_callee
+    volumes:
+      - ./sipp_scenarios/uas.xml:/tools/sipp/sipp_scenarios/uas.xml
+    command: sh -c "sipp -aa -sf sipp_scenarios/uas.xml -i 200.200.200.4 -p 5060"
+    networks:
+      kamailio_PRACK_network:
+        ipv4_address: 200.200.200.4
+    depends_on:
+      - kamailio_sip_proxy
+
+
+  # the caller is a SIPp instance
+  # UAC listening on  200.200.200.2:5080
+  # Command to send
+  # sipp -aa -trace_err -sf sipp_scenarios/uac.xml -i 200.200.200.2 -p 5080 -s called_party 200.200.200.3:5060 -m   1
+  the_caller:
+    image: debian-sipp:latest
+    container_name: the_caller
+    hostname: the_caller
+    volumes:
+      - ./sipp_scenarios/uac.xml:/tools/sipp/sipp_scenarios/uac.xml
+    stdin_open: true
+    tty: true
+    depends_on:
+      - kamailio_sip_proxy
+      - the_callee
+    networks:
+      kamailio_PRACK_network:
+        ipv4_address: 200.200.200.2
+
+networks:
+  kamailio_PRACK_network:
+    driver: bridge
+    name: "kamailio_PRACK_network"
+    ipam:
+      config:
+        - subnet: 200.200.200.0/24
