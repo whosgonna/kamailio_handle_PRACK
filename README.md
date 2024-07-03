@@ -1,3 +1,5 @@
+
+[Kamailio SIP INVIE-PRACK-Negative SIP Response Scenario Handling](#Kamailio SIP INVIE-PRACK-Negative SIP Response Scenario Handling)
 # Kamailio SIP INVIE-PRACK-Negative SIP Response Scenario Handling
 This repository is a docker compose containing Kamailio as a SIP Proxy and SIPp as the UAC and UAS. It handles a scenario when Kamailio receives a negative SIP response (e.g., 486) from the UAS, processes it in the ***failure_route***, and sends a different SIP response to the UAC.
 
