@@ -37,7 +37,8 @@ This repository is a docker compose containing Kamailio as a SIP Proxy and SIPp 
 - UAS SIP Address: **200.200.200.4:5060**
   
 # 3. Building the Docker Images
-The Dockerfiles for Kamailio and SIPp are located in ***./kamailio_handle_PRACK/dockerfiles***. To set up the environment, you need to build a Docker image for Kamailio version 5.7.5 in the ***kamailio_handle_PRACK/dockerfiles/kamailio\ 5.7.5*** directory. If you already have the Kamailio Docker image, you can use it _and change the image value_ in the **docker-compose.yml** file. The same applies to the SIPp Dockerfile located in ***kamailio_handle_PRACK/dockerfiles/SIPp***.
+The Dockerfiles for Kamailio and SIPp are located in ***./kamailio_handle_PRACK/dockerfiles***. To set up the environment, you need to build a Docker image for Kamailio version 5.7.5 in the ***kamailio_handle_PRACK/dockerfiles/kamailio\ 5.7.5*** directory.
+If you already have the Kamailio Docker image, you can use it _and change the image value_ in the **docker-compose.yml** file. The same applies to the SIPp Dockerfile located in ***kamailio_handle_PRACK/dockerfiles/SIPp***.
 
 # 4. Steps to Build Docker Image
 # 4.1. Building kamailio 5.7.5 docker image
