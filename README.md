@@ -11,9 +11,7 @@ This repository is a docker compose containing Kamailio as a SIP Proxy and SIPp 
 - UAS SIP Address: **200.200.200.4:5060**
   
 # 3. Building the Docker Images
-The location of the Dockerfiles for kamailio and SIPp are in this location ***./kamailio_handle_PRACK/dockerfiles***
-To set up the environment, you need to build a Docker image for Kamailio version 5.7.5 in the ***kamailio_handle_PRACK/dockerfiles/kamailio\ 5.7.5*** directory.
-If you already have the kamailio docker image, you can use it and change the value of image in the ***docker-compose.yml*** file. Otherwise, you can use the provided Dockerfile in this repository. Same thing for the SIPp, you can find its dockerfile location here ***kamailio_handle_PRACK/dockerfiles/SIPp***
+The Dockerfiles for Kamailio and SIPp are located in ***./kamailio_handle_PRACK/dockerfiles***. To set up the environment, you need to build a Docker image for Kamailio version 5.7.5 in the ***kamailio_handle_PRACK/dockerfiles/kamailio\ 5.7.5*** directory. If you already have the Kamailio Docker image, you can use it _and change the image value_ in the **docker-compose.yml** file. The same applies to the SIPp Dockerfile located in ***kamailio_handle_PRACK/dockerfiles/SIPp***.
 
 # 4. Steps to Build Docker Image
 # 4.1. Building kamailio 5.7.5 docker image
@@ -37,7 +35,7 @@ docker build -t debian-sipp:latest .
 # 5. Interact with the docker compose project
 You can interact with this docker compose project in two ways, the first one it to type directly the commands to launch the SIPp call, launch the sngrep application and gettings logs or execute the ***./kamailio_handle_PRACK/env.bash*** bash file which contains bash shortcuts to interact with the docker containrs like making calls, launching the sngrep on the containers... Read the ***./kamailio_handle_PRACK/env.bash*** file for more details.
 
-## 5.1. (Optional for Linux Users) Interact with the project using env.bash shortcuts and aliases
+## 5.1. Choice 1: Using env.bash Shortcuts and Aliases (Optional for Linux Users)
 
 ### 5.1.1. Execute the *env.bash* file
 Navigate to the directory containing the ***env.bash*** file, then execute it:
@@ -74,7 +72,7 @@ $the_caller_sngrep #launch sngrep on the UAC container
 $the_callee_sngrep #launch snrep on the UAS container
 ```
 
-### 5.1.4. Other important commands
+### 5.1.4. Other important commands (start the UAC, restart UAS and kamailio)
 Launch the call from the UAC, type the following alias **client_call** (note: it is not a shortcut starting with $):
 ```bash
 client_call #this alias is well defined in the env.bash file, it starts the sipp as UAC and sends SIP requests to the kamailio
@@ -88,7 +86,7 @@ In case you did some changes to the kamailio configuration file located in the h
 $restart_proxy
 ```
 
-## 5.2. Commands Interact with the project
+## 5.2. Choice 2: Direct Interaction with Docker Compose
 ### 5.2.1. Basic commands
 To **start** the docker compose containers, type:
 ```bash
@@ -126,32 +124,42 @@ In case you did some changes to the kamailio configuration file located in the h
 docker compose restart kamailio_sip_proxy -t0
 ```
 
-bash
-Copy code
-docker run --name kamailio -d kamailio:5.7.5
-SIPp Configuration
-The SIP scenarios are defined in XML files. You can copy the provided XML scenarios from this repository.
+# 6. Steps to follow
+1. Build the Docker images or use your own Docker images.
+2. If using your own Docker images, ensure to change the volumes path in the **docker-compose.yml file** to take the kamailio configuration file.
+3. Start the Docker Compose project.
+4. Start SNGRep on each container to capture SIP traffic or use SNGRep on your host machine.
+5. Launch the call from the UAC. The UAS is already running (check the docker-compose.yml file).
+6. Check SNGRep in Kamailio to see the changes made to the "To" tag in the forwarded Negative SIP message reply.
 
-Example SIPp Command for UAC
-bash
-Copy code
-sipp -sf uac_scenario.xml -i 200.200.200.2 -p 5060 200.200.200.3:5060
-Example SIPp Command for UAS
-bash
-Copy code
-sipp -sf uas_scenario.xml -i 200.200.200.4 -p 5060
-Scenario Description
-UAC sends an INVITE to Kamailio.
-Kamailio forwards the INVITE to UAS.
-UAS responds with 100 Trying and 180 Ringing (with RSeq and 100rel required).
-UAS sends a 486 Busy Here response.
-Kamailio processes the 486 response and sends a different response (e.g., 606) to the UAC.
-Files in This Repository
-Dockerfile: For building the Kamailio Docker image.
-kamailio.cfg: Kamailio configuration file.
-uac_scenario.xml: SIPp scenario for UAC.
-uas_scenario.xml: SIPp scenario for UAS.
-Usage
-Build and run the Kamailio Docker container.
-Run SIPp with the provided UAC and UAS scenarios.
-Observe the SIP message flow and the custom response handling by Kamailio.
+# 7. SIP Scenario Description
+1. UAC sends an INVITE to Kamailio (including 100rel in Require & Supported headers).
+2. Kamailio replies to the INVITE with 100 Trying.
+3. Kamailio forwards the INVITE to UAS.
+4. UAS responds with 100 Trying and 180 Ringing (with RSeq and 100rel required), the 180 Ringing contains the "To" Tag.
+5. Kamailio forwards the 180 Ringing reply to the UAC.
+6. UAC sends PRACK (with RAck header).
+7. Kamailio forwards the PRACK to UAS.
+8. UAS responds with 200 OK to the PRACK.
+9. Kamailio forwards the 200 OK to the UAC.
+10. UAS responds with **486 Busy Here** final response to the INVITE transaction and sends it to Kamailio.
+11. Kamailio receives the final response from the UAS, enters the failure_route, and sends a new reply using **send_reply** or **t_send_reply**. The reply sent from Kamailio has a different "To" tag from the previous SIP messages.
+12. UAC receives the final response from Kamailio.
+13. UAC sends an ACK to finish the INVITE transaction.
+
+
+# 7. Expected results
+When Kamailio receives the Client Error SIP Reply "486 Busy here in this case, you can change to what ever >399 SIP Response, the same behaviour occurs" and executes the **send_reply** or **t_send_reply** methods, it should keep the same "To" tag in the generated SIP response.
+
+# 8. Files and directories description in this Repository
+- docker-compose.yml: A file which defines the services/containers, each with a volume to take the new configuration of kamailio.cfg and SIPp scenarios, as well as the network configuration.
+- env.bash: A file contains important shortcuts to execute commands
+- sipp_scenarios: Directory containing the XML files for UAC and UAS scenarios:
+  - uac.xml: UAC scenario.
+  - uas.xml UAS scenario.
+- kamailio_configuration: Directory containing the kamailio.cfg file, which you can configure or change.
+- dockerfiles: A directory containing subdirectories for Kamailio and SIPp, each with a Dockerfile to build the respective Docker image.
+
+# 9. Conclusion
+Thank you for taking the time to explore this project and help to fix the problem. If you have any suggestion or need further informations, please feel free to contact me at oualla.simohamed@gmail.com.
+
