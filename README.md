@@ -5,11 +5,23 @@
 [2. Network Configuration](#2.-Network-Configuration)
 
 [3. Building the Docker Images](#3.-Building-the-Docker-Images)
+
+
 [4. Steps to Build Docker Image](#4.-Steps-to-Build-Docker-Image)
+
+
 [5. Interact with the docker compose project](5.-Interact-with-the-docker-compose-project)
+
+
 [6. Steps to follow](#6.-Steps-to-follow)
+
+
 [7. Expected results](#7.-Expected-results)
+
+
 [8. Files and directories description in this Repository](#8.-Files-and-directories-description-in-this-Repository)
+
+
 [9. Conclusion](#9.-Conclusion)
 
 # Kamailio SIP INVIE-PRACK-Negative SIP Response Scenario Handling
