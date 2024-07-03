@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- 
+this is a SIP scenario to get the SIP Negatif Responses following a PRACK
+the SIP Messages are as follows in point of view of the UAS:
+  RECV (INVITE)
+  SEND (100 Trying)
+  SEND (180 Ringing with 100rel in Require header & RSeq value)
+  RECV (PRACK)
+  SEND (200 OK TO PRACK)
+  SEND (486 Busy here)
+  RECV (ACK)
+-->
+
+<scenario name="486 Following PRACK Transaction">
+
+  <recv request="INVITE" crlf="true"  rrs="true">
+    <!-- Extract INVITE'S CSeq values -->
+    <action>
+      <ereg regexp=".*" search_in="hdr" header="CSeq:" check_it="true" assign_to="invCSeq" />
+    </action>
+  </recv>
+  
+  <!-- Getting the values of the Via headers to send Replies for INVITE transaction-->
+  <nop>
+    <action>
+      <assignstr assign_to="lvia" value="[last_Via:]" />
+      <ereg regexp="[Vv][Ii][Aa]: (.*), (.*)" search_in="var" variable="lvia" assign_to="5,6,7"/>
+      <exec command="printing this  [$5]" />
+    </action>
+  </nop>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 100 Trying
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: [len]
+
+    ]]>
+  </send>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 180 Ringing
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[pid]SIPpTag01[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Require: 100rel
+      RSeq: 29
+      Content-Length: [len]
+
+    ]]>
+  </send>
+  
+  <recv request="PRACK" crlf="true"  rrs="true">
+  </recv>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: [len]
+
+    ]]>
+  </send>
+
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 486 Busy here
+      Via: [$6]
+      Via: [$7]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      CSeq: [$invCSeq]
+      Content-Length: [len]
+
+    ]]>
+  </send>
+
+  <recv request="ACK" crlf="true">
+  </recv>
+
+
+  <!-- Keep the call open for a while in case the 200 is lost to be     -->
+  <!-- able to retransmit it if we receive the BYE again.               -->
+  <timewait milliseconds="4000"/>
+
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>

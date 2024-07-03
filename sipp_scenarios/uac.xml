@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- 
+this is a SIP scenario to get the SIP Negatif Responses following a PRACK
+the SIP Messages are as follows:
+  SEND (INVITE)
+  RECV (100 Trying)
+  RECV (180 Ringing with 100rel in Require header & RSeq value)
+  SEND (PRACK)
+  RECV (200 OK TO PRACK)
+  RECV (486 Busy here)
+  SEND (ACK)
+-->
+
+<scenario name="PRACK Transaction">
+
+  <send retrans="500" start_txn="invite">
+    <![CDATA[
+
+      INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      From: <sip:mohamed@[local_ip]:[local_port]>;tag=[pid]SIPpTag09[call_number]
+      To: <sip:[service]@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: 1 INVITE
+      Contact: <sip:mohamed@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      Require: 100rel
+      Supported: 100rel
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=mohamed 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+      s=-
+      c=IN IP[media_ip_type] [media_ip]
+      t=0 0
+      m=audio [rtpstream_audio_port] RTP/AVP 8 101
+      a=rtpmap:8 PCMA/8000
+      a=rtpmap:101 telephone-event/8000
+      a=fmtp:101 0-11,16
+
+    ]]>  
+
+  
+  </send>
+
+  <recv response="100" optional="true" response_txn="invite"></recv>
+
+  <recv response="180" response_txn="invite" next="send_prack">
+    <!-- EXTRACT THE RSeq and CSeq value to send the PRACK with RAck header!-->
+    <action>
+      <ereg regexp=".*" search_in="hdr" header="RSeq:" check_it="true" assign_to="inv180RSeq" />
+      <ereg regexp=".*" search_in="hdr" header="CSeq:" check_it="true" assign_to="inv180CSeq" />
+    </action>
+  </recv>
+
+  
+  <label id="send_prack" />
+  <!-- PRACK Request starts a new transaction meaning a new via branch param and increment CSeq counter -->
+  <send start_txn="180prack">
+    <![CDATA[
+
+      PRACK sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      CSeq: 2 PRACK
+      RAck: [$inv180RSeq] [$inv180CSeq]
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- RECV THE 200 OK OF THE PRACK-->
+  <recv response="200" optional="true" response_txn="180prack"></recv>
+
+  <!-- RECV THE 200 OK OF THE INVITE "NOT IN THIS SCENARIO"-->
+  <recv response="200" optional="true" response_txn="invite" next="call_done"  rtd="true" crlf="true" rrs="true">
+  </recv>
+
+  <recv response="401" optional="true"  next="call_abort" response_txn="invite"></recv>
+  <recv response="403" optional="true"  next="call_abort" response_txn="invite"></recv>
+  <!-- WE MAY RECEIVE 606 from kamailio if we hit the send_reply or t_send_reply -->
+  <recv response="606" optional="true"  next="call_abort" response_txn="invite"></recv>
+  <!-- WE MAY RECEIVE 486 from kamailio if kamailio just relays it -->
+  <recv response="486" optional="true"  next="call_abort" response_txn="invite"></recv>
+  <recv response="500" optional="true"  next="call_abort" response_txn="invite"></recv>
+  <recv response="503" next="call_abort" response_txn="invite"></recv>
+
+  <label id="call_done" />
+  <send ack_txn="invite">
+    <![CDATA[
+
+      ACK [next_url] SIP/2.0
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      CSeq: 1 ACK
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- The 'crlf' option inserts a blank line in the statistics report. -->
+  <send retrans="500" start_txn="bye">
+    <![CDATA[
+
+      BYE [next_url] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      CSeq: 2 BYE
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <recv response_txn="bye" response="200" crlf="true" next="call_end"></recv>
+
+  <label id="call_abort" />
+  <send ack_txn="invite">
+    <![CDATA[
+
+      ACK sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      CSeq: 1 ACK
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <label id="call_end" />
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000, 20000"/>
+
+  <!-- pause to receive unexpected messages  -->
+  <pause milliseconds="3000"/>
+
+
+</scenario>
+
